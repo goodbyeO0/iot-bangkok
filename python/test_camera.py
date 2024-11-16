@@ -3,6 +3,7 @@ import time
 import os
 from datetime import datetime
 import requests
+import json
 
 def get_location():
     """Get device location coordinates using ipinfo.io API"""
@@ -78,16 +79,31 @@ def test_camera():
     picam2.stop()
     print("Camera test complete")
     
-    # Get location and send to API
+    # Get location and send to API, then get car data
     try:
+        # 1. Send location data
         location = get_location()
-        response = requests.post(
+        location_response = requests.post(
             'http://localhost:3005/api/location',
             json=location
         )
         print(f"Location sent to API: {location}")
+
+        # 2. Get car data
+        if location_response.status_code == 200:
+            print("Getting car data from API...")
+            car_data_response = requests.get('http://localhost:3005/api/carData')
+            
+            if car_data_response.status_code == 200:
+                car_data = car_data_response.json()
+                print("\nCar Data Response:")
+                print(json.dumps(car_data, indent=2))
+            else:
+                print(f"Error getting car data. Status code: {car_data_response.status_code}")
+                print(f"Response: {car_data_response.text}")
+        
     except Exception as e:
-        print(f"Error sending location to API: {str(e)}")
+        print(f"Error in API communication: {str(e)}")
 
 if __name__ == "__main__":
     try:

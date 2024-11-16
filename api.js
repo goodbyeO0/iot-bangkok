@@ -1,5 +1,119 @@
 import getBase64Image from "./utils/base64_imageConverter.js";
 import { getImagesFromDirectory } from "./utils/base64_imageConverter.js";
+import { ethers } from 'ethers';
+import dotenv from 'dotenv';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+import nodemailer from 'nodemailer';
+
+// Initialize blockchain connection
+dotenv.config();
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const contractABI = JSON.parse(
+    readFileSync(join(__dirname, 'ABI.json'), 'utf8')
+);
+
+const RPC_URL = process.env.RPC_URL;
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
+
+const provider = new ethers.JsonRpcProvider(RPC_URL);
+const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, wallet);
+
+// Email configuration
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+    }
+});
+
+// Function to convert coordinates to blockchain format
+const convertCoordinate = (coord) => {
+    return Math.round(parseFloat(coord) * 1000000);
+};
+
+// Function to add violation to blockchain
+async function addViolationToBlockchain(carData) {
+    try {
+        const latitude = convertCoordinate(carData.location.latitude);
+        const longitude = convertCoordinate(carData.location.longitude);
+
+        const tx = await contract.addViolationRecord(
+            carData["License plate number"],
+            carData.Color,
+            carData.Brand,
+            carData.timestamp,
+            latitude,
+            longitude
+        );
+
+        const receipt = await tx.wait();
+        console.log('Blockchain transaction successful:', receipt.hash);
+
+        // Send email notification after successful blockchain transaction
+        try {
+            const emailId = await sendViolationEmail(
+                carData["License plate number"],
+                carData,
+                receipt.hash
+            );
+            console.log('Notification email sent:', emailId);
+        } catch (emailError) {
+            console.error('Failed to send email notification:', emailError);
+            // Continue even if email fails
+        }
+
+        return receipt.hash;
+    } catch (error) {
+        console.error('Error adding violation to blockchain:', error);
+        throw error;
+    }
+}
+
+// Function to send violation email
+async function sendViolationEmail(plateNumber, carData, transactionHash) {
+    try {
+        // Get email from blockchain
+        const ownerEmail = await contract.getEmailByPlateNumber(plateNumber);
+        
+        // Email content
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: ownerEmail,
+            subject: 'Traffic Violation Notice',
+            html: `
+                <h2>Traffic Violation Notice</h2>
+                <p>Dear Vehicle Owner,</p>
+                <p>A traffic violation has been recorded for your vehicle:</p>
+                <ul>
+                    <li>License Plate: ${carData["License plate number"]}</li>
+                    <li>Vehicle: ${carData.Brand}</li>
+                    <li>Color: ${carData.Color}</li>
+                    <li>Time: ${carData.timestamp}</li>
+                    <li>Location: ${carData.location.latitude}, ${carData.location.longitude}</li>
+                </ul>
+                <p>Blockchain Transaction: ${transactionHash}</p>
+                <p>Please review this violation and take necessary action.</p>
+                <br>
+                <p>Best regards,</p>
+                <p>Traffic Management System</p>
+            `
+        };
+
+        // Send email
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent:', info.messageId);
+        return info.messageId;
+
+    } catch (error) {
+        console.error('Error sending email:', error);
+        throw error;
+    }
+}
 
 import express from "express";
 const app = express();
@@ -36,6 +150,15 @@ app.get("/api/carData", async (req, res) => {
       ...latestCarData,
       ...(locationData && { location: locationData }),
     };
+
+    // Add to blockchain after processing
+    try {
+        const transactionHash = await addViolationToBlockchain(responseData);
+        responseData.blockchainTransactionHash = transactionHash;
+    } catch (blockchainError) {
+        console.error("Blockchain error:", blockchainError);
+        // Continue with response even if blockchain fails
+    }
 
     res.status(200).json(responseData);
   } catch (error) {
