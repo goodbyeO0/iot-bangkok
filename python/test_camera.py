@@ -2,6 +2,15 @@ from picamera2 import Picamera2
 import time
 import os
 from datetime import datetime
+import geocoder
+import requests
+
+def get_location():
+    g = geocoder.ip('me')
+    return {
+        "latitude": g.lat,
+        "longitude": g.lng
+    }
 
 def test_camera():
     # Create base images directory
@@ -49,6 +58,17 @@ def test_camera():
     # Stop camera
     picam2.stop()
     print("Camera test complete")
+    
+    # Get location and send to API
+    try:
+        location = get_location()
+        response = requests.post(
+            'http://localhost:3005/api/location',
+            json=location
+        )
+        print(f"Location sent to API: {location}")
+    except Exception as e:
+        print(f"Error sending location to API: {str(e)}")
 
 if __name__ == "__main__":
     try:
