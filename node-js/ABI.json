@@ -1,0 +1,465 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_plateNumber",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_color",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_brand",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_timestamp",
+				"type": "string"
+			},
+			{
+				"internalType": "int256",
+				"name": "_latitude",
+				"type": "int256"
+			},
+			{
+				"internalType": "int256",
+				"name": "_longitude",
+				"type": "int256"
+			}
+		],
+		"name": "addViolationRecord",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_plateNumber",
+				"type": "string"
+			}
+		],
+		"name": "payFine",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "plateNumber",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "FinePaid",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "icNumber",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "plateNumber",
+				"type": "string"
+			}
+		],
+		"name": "PlateNumberRegistered",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_icNumber",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_plateNumber",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_email",
+				"type": "string"
+			}
+		],
+		"name": "registerPlateNumber",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_amount",
+				"type": "uint256"
+			}
+		],
+		"name": "setDefaultFineAmount",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "plateNumber",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "ViolationRecorded",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "withdrawFunds",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "defaultFineAmount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_icNumber",
+				"type": "string"
+			}
+		],
+		"name": "getEmailByIC",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_plateNumber",
+				"type": "string"
+			}
+		],
+		"name": "getEmailByPlateNumber",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_icNumber",
+				"type": "string"
+			}
+		],
+		"name": "getPlateNumbersByIC",
+		"outputs": [
+			{
+				"internalType": "string[]",
+				"name": "",
+				"type": "string[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_plateNumber",
+				"type": "string"
+			}
+		],
+		"name": "getTotalUnpaidFines",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_plateNumber",
+				"type": "string"
+			}
+		],
+		"name": "getViolationCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_plateNumber",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_index",
+				"type": "uint256"
+			}
+		],
+		"name": "getViolationRecord",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "plateNumber",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "color",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "brand",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "timestamp",
+				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "isPaid",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "fineAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "int256",
+				"name": "latitude",
+				"type": "int256"
+			},
+			{
+				"internalType": "int256",
+				"name": "longitude",
+				"type": "int256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "icToEmail",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "icToPlateNumbers",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "plateNumberToIC",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "violationRecords",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "plateNumber",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "color",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "brand",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "timestamp",
+				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "isPaid",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "fineAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "int256",
+				"name": "latitude",
+				"type": "int256"
+			},
+			{
+				"internalType": "int256",
+				"name": "longitude",
+				"type": "int256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]

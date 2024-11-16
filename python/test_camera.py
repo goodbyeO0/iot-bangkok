@@ -2,15 +2,33 @@ from picamera2 import Picamera2
 import time
 import os
 from datetime import datetime
-import geocoder
 import requests
 
 def get_location():
-    g = geocoder.ip('me')
-    return {
-        "latitude": g.lat,
-        "longitude": g.lng
-    }
+    """Get device location coordinates using ipinfo.io API"""
+    try:
+        print("Getting location coordinates...")
+        response = requests.get('https://ipinfo.io', timeout=5)
+        
+        if response.status_code == 200:
+            data = response.json()
+            loc = data['loc'].split(',')
+            coords = {
+                "latitude": float(loc[0]),
+                "longitude": float(loc[1])
+            }
+            print(f"Coordinates: {coords['latitude']}, {coords['longitude']}")
+            return coords
+        else:
+            print(f"Error: Status code {response.status_code}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        print(f"Connection error: {e}")
+        return None
+    except (ValueError, KeyError) as e:
+        print(f"Data parsing error: {e}")
+        return None
 
 def test_camera():
     # Create base images directory
@@ -41,7 +59,8 @@ def test_camera():
     seconds_to_record = 4
     
     # Calculate number of pictures for 4 seconds
-    num_pictures = int(seconds_to_record / 0.5)  # 8 pictures
+
+    num_pictures = int(seconds_to_record / 1)  # 8 pictures
     
     # Capture images with 0.5-second interval
     for i in range(num_pictures):
