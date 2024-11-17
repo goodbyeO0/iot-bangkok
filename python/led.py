@@ -3,8 +3,8 @@ import time
 import signal
 
 # Setup LEDs
-led_17 = gpiozero.LED(17)
-led_27 = gpiozero.LED(27)
+led_17 = gpiozero.LED(17) # Green LED
+led_27 = gpiozero.LED(27) # Red LED 
 
 try:
     while True:

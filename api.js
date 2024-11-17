@@ -6,6 +6,15 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
+import express from "express";
+import cors from 'cors';
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+const port = 3005;
+let latestCarData = null;
+let locationData = null;
 
 // Initialize blockchain connection
 dotenv.config();
@@ -114,12 +123,6 @@ async function sendViolationEmail(plateNumber, carData, transactionHash) {
   }
 }
 
-import express from "express";
-const app = express();
-app.use(express.json());
-const port = 3005;
-let latestCarData = null;
-let locationData = null;
 
 app.post("/api/location", (req, res) => {
   try {
@@ -164,6 +167,143 @@ app.get("/api/carData", async (req, res) => {
     console.error("Error fetching car data:", error);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+app.get("/api/violations", async (req, res) => {
+    try {
+        // Get all plate numbers with violations
+        const plateNumbers = await contract.getAllPlateNumbersWithViolations();
+        
+        // Create array to store all violation data
+        const allViolations = [];
+
+        // Get violations for each plate number
+        for (const plateNumber of plateNumbers) {
+            try {
+                // Get violations for this plate number
+                const violations = await contract.getAllViolationsForPlateNumber(plateNumber);
+                
+                // Get email for this plate number
+                const ownerEmail = await contract.getEmailByPlateNumber(plateNumber);
+
+                // Format violations data
+                const formattedViolations = violations.map(violation => ({
+                    plateNumber: plateNumber,
+                    ownerEmail: ownerEmail,
+                    color: violation.color,
+                    brand: violation.brand,
+                    timestamp: violation.timestamp,
+                    isPaid: violation.isPaid,
+                    fineAmount: violation.fineAmount.toString(), // Convert BigNumber to string
+                    location: {
+                        latitude: parseFloat(violation.latitude.toString()) / 1000000, // Convert back from blockchain format
+                        longitude: parseFloat(violation.longitude.toString()) / 1000000
+                    }
+                }));
+
+                allViolations.push(...formattedViolations);
+            } catch (error) {
+                console.error(`Error processing violations for plate ${plateNumber}:`, error);
+                // Continue with next plate number
+            }
+        }
+
+        // Sort violations by timestamp (most recent first)
+        allViolations.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        // Create summary statistics
+        const summary = {
+            totalViolations: allViolations.length,
+            totalUnpaidViolations: allViolations.filter(v => !v.isPaid).length,
+            totalFineAmount: allViolations.reduce((sum, v) => sum + parseInt(v.fineAmount), 0),
+            uniquePlateNumbers: plateNumbers.length
+        };
+
+        res.status(200).json({
+            summary,
+            violations: allViolations
+        });
+
+    } catch (error) {
+        console.error("Error fetching violations:", error);
+        res.status(500).json({ 
+            error: "Failed to fetch violations",
+            details: error.message 
+        });
+    }
+});
+
+// Add new endpoint for violation analysis
+app.get("/api/violations/analysis", async (req, res) => {
+    try {
+        // First get all violations data
+        const plateNumbers = await contract.getAllPlateNumbersWithViolations();
+        const allViolations = [];
+
+        // Collect violations data
+        for (const plateNumber of plateNumbers) {
+            try {
+                const violations = await contract.getAllViolationsForPlateNumber(plateNumber);
+                const formattedViolations = violations.map(violation => ({
+                    plateNumber: plateNumber,
+                    timestamp: violation.timestamp,
+                    location: {
+                        latitude: parseFloat(violation.latitude.toString()) / 1000000,
+                        longitude: parseFloat(violation.longitude.toString()) / 1000000
+                    }
+                }));
+                allViolations.push(...formattedViolations);
+            } catch (error) {
+                console.error(`Error processing violations for plate ${plateNumber}:`, error);
+            }
+        }
+
+        // Format data for AI analysis
+        const analysisData = {
+            totalViolations: allViolations.length,
+            violations: allViolations.map(v => ({
+                time: new Date(v.timestamp).toLocaleTimeString(),
+                date: new Date(v.timestamp).toLocaleDateString(),
+                location: `${v.location.latitude}, ${v.location.longitude}`
+            }))
+        };
+
+        // Query Flowise AI for analysis
+        const aiResponse = await fetch(
+            "http://localhost:3000/api/v1/prediction/722a1f44-d0d1-42ad-b2c6-01f73fa44fb3",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    question: `Please analyze this traffic violation data and provide:
+                        1. Violation trends
+                        2. Peak times for violations
+                        3. Hotspot locations for red-light running
+                        4. Suggested preventative measures
+                        
+                        Data: ${JSON.stringify(analysisData, null, 2)}`,
+                    uploads: []
+                })
+            }
+        );
+
+        const analysis = await aiResponse.json();
+
+        // Format and send response
+        res.status(200).json({
+            rawData: analysisData,
+            analysis: analysis.text
+        });
+
+    } catch (error) {
+        console.error("Error analyzing violations:", error);
+        res.status(500).json({
+            error: "Failed to analyze violations",
+            details: error.message
+        });
+    }
 });
 
 async function query(data) {
