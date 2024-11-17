@@ -4,20 +4,23 @@ import os
 from datetime import datetime
 import requests
 import json
-from gpiozero import Button  # Change from LED to Button
+from gpiozero import LED  # Change back to LED
 
-# Setup LED monitoring (as input)
-red_led_status = Button(27, pull_up=False)  # Monitor GPIO 27 as input
+# Setup LEDs
+green_led = LED(17)  # Green LED
+red_led = LED(27)    # Red LED
 
-def is_red_light():
-    """Check if the red light is on"""
-    return red_led_status.is_pressed  # Use is_pressed to check state
+def set_green_light():
+    """Set traffic light to green"""
+    green_led.on()
+    red_led.off()
+    print("Traffic light: GREEN")
 
-def wait_for_red_light():
-    """Wait until the red light is on before proceeding"""
-    while not is_red_light():
-        time.sleep(0.1)  # Check every 100ms
-    print("Red light detected - starting camera sequence")
+def set_red_light():
+    """Set traffic light to red"""
+    red_led.on()
+    green_led.off()
+    print("Traffic light: RED")
 
 def get_location():
     """Get device location coordinates using ipinfo.io API"""
@@ -42,10 +45,15 @@ def get_location():
         return None
 
 def test_camera():
-    while True:  # Continuous monitoring
-        try:
-            # Wait for red light before starting
-            wait_for_red_light()
+    try:
+        while True:
+            # Start with green light for 10 seconds
+            set_green_light()
+            time.sleep(10)
+            
+            # Switch to red light and start camera sequence
+            set_red_light()
+            print("Starting camera sequence...")
             
             # Create base images directory
             base_dir = os.path.join(os.path.dirname(__file__), 'images')
@@ -70,21 +78,11 @@ def test_camera():
             print("Warming up camera...")
             time.sleep(3)
             
-            # Only proceed if still red light
-            if not is_red_light():
-                print("Red light ended during warmup - aborting sequence")
-                picam2.stop()
-                continue
-            
             # Capture images
             seconds_to_record = 4
             num_pictures = int(seconds_to_record / 1)
             
             for i in range(num_pictures):
-                if not is_red_light():
-                    print("Red light ended - stopping capture sequence")
-                    break
-                    
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
                 filename = f"image_{timestamp}.png"
                 filepath = os.path.join(session_dir, filename)
@@ -126,17 +124,25 @@ def test_camera():
                 except Exception as e:
                     print(f"Error in API communication: {str(e)}")
             
-            # Wait a bit before checking for next red light
-            time.sleep(1)
+            print("Operations complete, switching back to green...")
             
-        except Exception as e:
-            print(f"Error in camera sequence: {str(e)}")
-            time.sleep(1)  # Wait before retrying
+    except Exception as e:
+        print(f"Error in camera sequence: {str(e)}")
+    finally:
+        # Ensure LEDs are cleaned up
+        green_led.off()
+        red_led.off()
 
 if __name__ == "__main__":
     try:
         test_camera()
     except KeyboardInterrupt:
         print("\nProgram stopped by user")
+        # Cleanup LEDs
+        green_led.off()
+        red_led.off()
     except Exception as e:
         print(f"Fatal error: {str(e)}")
+        # Cleanup LEDs
+        green_led.off()
+        red_led.off()
