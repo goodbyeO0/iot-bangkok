@@ -4,14 +4,14 @@ import os
 from datetime import datetime
 import requests
 import json
-import gpiozero
+from gpiozero import Button  # Change from LED to Button
 
-# Setup LED monitoring
-red_led = gpiozero.LED(27)  # Red LED on GPIO 27
+# Setup LED monitoring (as input)
+red_led_status = Button(27, pull_up=False)  # Monitor GPIO 27 as input
 
 def is_red_light():
     """Check if the red light is on"""
-    return red_led.value == 1
+    return red_led_status.is_pressed  # Use is_pressed to check state
 
 def wait_for_red_light():
     """Wait until the red light is on before proceeding"""
